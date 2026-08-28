@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DPS Calculator</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
+        .section-title { font-size: 1.1em; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .section-footer { font-size: 0.8em; margin-top: 25px; margin-bottom: 10px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .tiny-text { font-size: 0.8em; margin-top: -20px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        label { display: block; font-size: 0.8em; margin-bottom: 3px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 6px; box-sizing: border-box; background: #1e1e1e; color: #fff; border: 1px solid #333; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85em; }
+        th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+        th { background: #1e1e1e; }
+        .tables-container { display: flex; gap: 20px; margin-top: 20px; }
+        .tables-container > div { flex: 1; overflow-x: auto; }
+        #status { font-size: 0.8em; font-style: italic; color: #888; margin-bottom: 10px; }
+        .grid-group { background: #181818; padding: 8px; border: 1px solid #2a2a2a; border-radius: 4px; }
+        .archetypes-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .archetype-column { background: #161616; border: 1px solid #282828; border-radius: 6px; padding: 12px; }
+        .archetype-header { font-size: 0.95em; font-weight: bold; color: #fff; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #333; text-transform: uppercase; letter-spacing: 0.5px; }
+        .archetype-column .grid-group { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h2>DPS Calculator</h2>
+    <div class="section-title">Character Stats</div>
+    <div class="archetypes-container">
+        <div class="archetype-column">
+            <div class="archetype-header" style="color: #ff7676;">Melee (STR)</div>
+            <div class="grid-group"><label>STR Stat</label><input type="number" id="stat_str" value="0"></div>
+            <div class="grid-group"><label>Melee +Atk</label><input type="number" id="atk_melee" value="0"></div>
+            <div class="grid-group"><label>Melee % Dmg</label><input type="number" id="dmg_melee" value="0"></div>
+            <div class="grid-group"><label>Melee Spd</label><input type="number" id="spd_melee" value="0"></div>
+        </div>
+        <div class="archetype-column">
+            <div class="archetype-header" style="color: #76ff76;">Ranged (DEX)</div>
+            <div class="grid-group"><label>DEX Stat</label><input type="number" id="stat_dex" value="0"></div>
+            <div class="grid-group"><label>Ranged +Atk</label><input type="number" id="atk_ranged" value="0"></div>
+            <div class="grid-group"><label>Ranged % Dmg</label><input type="number" id="dmg_ranged" value="0"></div>
+            <div class="grid-group"><label>Ranged Spd</label><input type="number" id="spd_ranged" value="0"></div>
+        </div>
+        <div class="archetype-column">
+            <div class="archetype-header" style="color: #76d7ff;">Magic (INT)</div>
+            <div class="grid-group"><label>INT Stat</label><input type="number" id="stat_int" value="0"></div>
+            <div class="grid-group"><label>Magic +Atk</label><input type="number" id="atk_magic" value="0"></div>
+            <div class="grid-group"><label>Magic % Dmg</label><input type="number" id="dmg_magic" value="0"></div>
+            <div class="grid-group"><label>Magic Spd</label><input type="number" id="spd_magic" value="0"></div>
+        </div>
+        <div class="archetype-column">
+            <div class="archetype-header" style="color: #ffdb76;">Faith (Spirit)</div>
+            <div class="grid-group"><label>Spirit Stat</label><input type="number" id="stat_spirit" value="0"></div>
+            <div class="grid-group"><label>Faith +Atk</label><input type="number" id="atk_faith" value="0"></div>
+            <div class="grid-group"><label>Faith % Dmg</label><input type="number" id="dmg_faith" value="0"></div>
+            <div class="grid-group"><label>Faith Spd</label><input type="number" id="spd_faith" value="0"></div>
+        </div>
+    </div>
+    <div class="grid" id="modifiers-inputs">
+        <div class="grid-group"><label>LUK Stat</label><input type="number" id="stat_luk" value="0"></div>
+        <div class="grid-group"><label>CON Stat</label><input type="number" id="stat_con" value="0"></div>
+        <div class="grid-group"><label>All +Atk</label><input type="number" id="atk_all" value="0"></div>
+        <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" value="0"></div>
+        <div class="grid-group"><label>All Spd</label><input type="number" id="spd_all" value="0"></div>
+    </div>
+    <div class="section-title">Crit / Element Stats</div>
+    <div class="grid" id="combat-inputs">
+        <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" value="0"></div>
+        <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" value="0"></div>
+        <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" value="0"></div>
+        <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" value="0"></div>
+    </div>
+    <div class="section-title">Basic Attack / Element</div>
+    <div class="grid" id="setting-inputs">
+        <div>
+            <label>Basic Attack</label>
+            <select id="basic_atk">
+                <option value="shield_bash">shield_bash</option>
+                <option value="slash" selected>slash</option>
+                <option value="nova">nova</option>
+                <option value="ninja_throw">ninja_throw</option>
+                <option value="magic_burst">magic_burst</option>
+                <option value="holy_arrow">holy_arrow</option>
+                <option value="soul_shot">soul_shot</option>
+                <option value="magic_slash">magic_slash</option>
+            </select>
+        </div>
+        <div><label>Basic Atk Level</label><input type="number" id="basic_atk_lvl" value="1"></div>
+        <div>
+            <label>Element Type</label>
+            <select id="element_type">
+                <option value="normal">Normal</option>
+                <option value="fire" selected>Fire</option>
+                <option value="ghost">Ghost</option>
+                <option value="ice">Ice</option>
+                <option value="lightning">Lightning</option>
+                <option value="metal">Metal</option>
+            </select>
+        </div>
+    </div>
+    <div id="status">Loading skill data</div>
+    <div class="tables-container">
+        <div>
+            <h3>Single Target DPS Rankings</h3>
+            <div class="tiny-text">per skill level</div>
+            <table id="st-table">
+                <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div>
+            <h3>AOE DPS Rankings</h3>
+            <div class="tiny-text">per skill level</div>
+            <table id="aoe-table">
+                <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="section-footer">Not affiliated with Soul's Remnant or Chaomoon in any way. No warranty expressed or implied.</div>
+
+    <script>
+        let cachedAbilities = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('./de.csv')
+                .then(response => {
+                    if (!response.ok) throw new Error(`Response error: ${response.status}`);
+                    return response.text();
+                })
+                .then(text => {
+                    document.getElementById('status').innerText = "Skill data loaded successfully.";
+                    processData(text);
+                })
+                .catch(err => {
+                    document.getElementById('status').innerText = `Failed to load skill data: ${err.message}`;
+                    console.error(err);
+                });
+        });
+
+        function parseCSVLine(text) {
+            let result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"' && text[i+1] === '"') {
+                    current += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function processData(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim().length > 0);
+            if (lines.length <= 2) return;
+
+            const dataLines = lines.slice(2);
+            cachedAbilities = [];
+
+            dataLines.forEach(line => {
+                const cols = parseCSVLine(line);
+                if (!cols[0]) return;
+
+                cachedAbilities.push({
+                    name: cols[0],
+                    cd: parseFloat(cols[1]) || 0,
+                    targets: parseFloat(cols[2]) || 1,
+                    hits: parseFloat(cols[3]) || 1,
+                    miss: parseFloat(cols[4]),
+                    useSpeed: cols[10] !== 'TRUE' || cols[10] !== 'true',
+                    skillType: {
+                        str: cols[5] === 'TRUE' || cols[5] === 'true',
+                        fth: cols[6] === 'TRUE' || cols[6] === 'true',
+                        mag: cols[7] === 'TRUE' || cols[7] === 'true',
+                        dex: cols[8] === 'TRUE' || cols[8] === 'true',
+                        basic: cols[9] === 'TRUE' || cols[9] === 'true',
+                    },
+                    singleScalars: {
+                        str: parseFloat(cols[24]) / 100 || 0,
+                        fth: parseFloat(cols[25]) / 100 || 0,
+                        mag: parseFloat(cols[26]) / 100 || 0,
+                        dex: parseFloat(cols[27]) / 100 || 0
+                    },
+                    aoeScalars: {
+                        str: parseFloat(cols[29]) / 100 || 0,
+                        fth: parseFloat(cols[30]) / 100 || 0,
+                        mag: parseFloat(cols[31]) / 100 || 0,
+                        dex: parseFloat(cols[32]) / 100 || 0
+                    }
+                });
+            });
+
+            calculateAndRender();
+        }
+
+        function getVal(id) {
+            return parseFloat(document.getElementById(id).value) || 0;
+        }
+
+        function calculateAndRender() {
+            if (!cachedAbilities.length) return;
+
+            // Gather inputs cleanly
+            const str = getVal('stat_str');
+            const dex = getVal('stat_dex');
+            const intVal = getVal('stat_int');
+            const spirit = getVal('stat_spirit');
+            const luk = getVal('stat_luk');
+            const con = getVal('stat_con');
+
+            const atkAll = getVal('atk_all');
+            const atkMelee = getVal('atk_melee');
+            const atkRanged = getVal('atk_ranged');
+            const atkMagic = getVal('atk_magic');
+            const atkFaith = getVal('atk_faith');
+
+            const dmgAll = getVal('dmg_all');
+            const dmgMelee = getVal('dmg_melee');
+            const dmgRanged = getVal('dmg_ranged');
+            const dmgMagic = getVal('dmg_magic');
+            const dmgFaith = getVal('dmg_faith');
+
+            let spdAll = getVal('spd_all');
+            const spdMelee = getVal('spd_melee');
+            const spdRanged = getVal('spd_ranged');
+            const spdMagic = getVal('spd_magic');
+            const spdFaith = getVal('spd_faith');
+
+            const critChance = getVal('crit_chance');
+            const critDmg = getVal('crit_dmg');
+            const elemChance = getVal('elem_chance');
+            const elemPotency = getVal('elem_potency');
+
+            const elementType = document.getElementById('element_type').value;
+
+            const baseStr = (str + (spirit * 0.25) + (con * 0.26) + 30) * (15 + atkAll + atkMelee) / 30 * (1 + (dmgMelee)/100) * (1 + dmgAll/100);
+            const baseSpirit = (spirit + (spirit * 0.25) + (con * 0.2925) + 30) * (15 + atkAll + atkFaith) / 30 * (1 + (dmgFaith)/100) * (1 + dmgAll/100);
+            const baseInt = (intVal + (spirit * 0.45) + (luk * 0.35) + 30) * (15 + atkAll + atkMagic) / 30 * (1 + (dmgMagic)/100) * (1 + dmgAll/100);
+            const baseDex = (dex + (spirit * 0.2) + (luk * 0.65) + 30) * (15 + atkAll + atkRanged) / 30 * (1 + (dmgRanged)/100) * (1 + dmgAll/100);
+
+            let c8, d8, e8, f8;
+            c8 = d8 = e8 = f8 = 0.0;
+
+            const basicAtkLvl = getVal('basic_atk_lvl')
+            const basicAtk = document.getElementById('basic_atk').value;
+            if (basicAtk === 'slash') { spdAll += basicAtkLvl; }
+            else if (basicAtk === 'magic_slash') {
+                c8 = baseInt * 0.03 * basicAtkLvl;
+                e8 = baseStr * 0.03 * basicAtkLvl;
+            }
+            else if (basicAtk === 'holy_arrow') {
+                d8 = baseDex * 0.025 * basicAtkLvl;
+                f8 = baseSpirit * 0.025 * basicAtkLvl;
+            }
+
+            const c9 = baseStr + c8;
+            const d9 = baseSpirit + d8;
+            const e9 = baseInt + e8;
+            const f9 = baseDex + f8;
+
+            const minElemChance = Math.min(elemChance, 100);
+            const f10 = minElemChance * (elemPotency + 100) / 10000 + (100 - minElemChance) / 100;
+
+            const minCritChance = Math.min(critChance, 100);
+            const c11 = minCritChance * (critDmg + 100) / 10000 + (100 - minCritChance) / 100;
+
+            let e11 = 1.0;
+            let f11 = 1.0;
+            if (elementType === 'ghost') { e11 = 1.75 * f10; f11 = 2.2 * f10; }
+            else if (elementType === 'fire') { e11 = 1.5 * f10; f11 = 2 * f10; }
+            else if (elementType === 'normal') { e11 = 1.8 * f10; f11 = 1.8 * f10; }
+            else if (elementType === 'ice') { e11 = 1.3; f11 = 1.3; }
+            else if (elementType === 'lightning') { e11 = 1.0; f11 = 1 + (1 - Math.pow(0.6, 5)) * f10; }
+            else if (elementType === 'metal') { e11 = (1 + 0.075 * 5 * f10); f11 = (1 + 0.075 * 5 * f10);}
+
+            let stResults = [];
+            let aoeResults = [];
+
+            cachedAbilities.forEach(ability => {
+                const stStr = ability.singleScalars.str * c9;
+                const stFth = ability.singleScalars.fth * d9;
+                const stMag = ability.singleScalars.mag * e9;
+                const stDex = ability.singleScalars.dex * f9;
+
+                const aoeStr = ability.aoeScalars.str * c9;
+                const aoeFth = ability.aoeScalars.fth * d9;
+                const aoeMag = ability.aoeScalars.mag * e9;
+                const aoeDex = ability.aoeScalars.dex * f9;
+
+                let multiplier = 1.0
+                if (ability.useSpeed) {
+                    let speed = 100.0
+                    if (ability.skillType?.str) speed += spdAll + spdMelee;
+                    if (ability.skillType?.fth) speed += spdAll + spdFaith;
+                    if (ability.skillType?.mag) speed += spdAll + spdMagic;
+                    if (ability.skillType?.dex) speed += spdAll + spdRanged;
+                    multiplier *= speed / 100.0
+                }
+
+                const finalST = (stStr + stFth + stMag + stDex) * c11 * e11 * multiplier;
+                const finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * f11 * multiplier;
+
+                stResults.push({ name: ability.name, dps: Math.max(0, finalST) });
+                aoeResults.push({ name: ability.name, dps: Math.max(0, finalAOE) });
+            });
+
+            stResults.sort((a, b) => b.dps - a.dps);
+            aoeResults.sort((a, b) => b.dps - a.dps);
+
+            renderTable('st-table', stResults);
+            renderTable('aoe-table', aoeResults);
+        }
+
+        function renderTable(tableId, data) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${row.name}</td><td>${row.dps.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', calculateAndRender);
+            el.addEventListener('change', calculateAndRender);
+        });
+    </script>
+</body>
+</html>
