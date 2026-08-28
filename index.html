@@ -334,8 +334,18 @@
         }
 
         document.querySelectorAll('input, select').forEach(el => {
-            el.addEventListener('input', calculateAndRender);
-            el.addEventListener('change', calculateAndRender);
+            const savedValue = localStorage.getItem(el.id);
+            if (savedValue !== null) {
+                el.value = savedValue;
+            }
+            el.addEventListener('input', () => {
+                localStorage.setItem(el.id, el.value);
+                calculateAndRender();
+            });
+            el.addEventListener('change', () => {
+                localStorage.setItem(el.id, el.value);
+                calculateAndRender();
+            });
         });
     </script>
 </body>
