@@ -2,19 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DPS Calculator</title>
+    <title>SR Damage Calculator</title>
     <style>
         body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; box-sizing: border-box; }
         .section-title { font-size: 1.1em; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .section-footer { font-size: 0.8em; margin-top: 25px; margin-bottom: 10px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .section-tiny-title { font-size: 0.8em; margin-top: 5px; margin-bottom: px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .tiny-text { font-size: 0.8em; margin-top: -20px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .dps-sum-label { font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #ffdb76; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
         label { display: block; font-size: 0.8em; margin-bottom: 3px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
         input, select { width: 100%; padding: 6px; box-sizing: border-box; background: #1e1e1e; color: #fff; border: 1px solid #333; font-size: 0.9em; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85em; }
         th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
-        th { background: #1e1e1e; }
+        th { background: #1e1e1e; cursor: pointer; user-select: none; position: relative; }
+        th:hover { background: #2a2a2a; }
+        th::after { content: ''; float: right; margin-top: 6px; }
+        th.sort-asc::after { content: ' ▲'; font-size: 0.7em; }
+        th.sort-desc::after { content: ' ▼'; font-size: 0.7em; }
+        tr.highlighted-row { background-color: rgba(255, 219, 118, 0.12); }
         #status { font-size: 0.8em; font-style: italic; color: #888; margin-bottom: 10px; }
         .grid-group { background: #181818; padding: 8px; border: 1px solid #2a2a2a; border-radius: 4px; }
         .archetypes-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
@@ -36,6 +42,12 @@
         }
         .notice-box { padding: 15px 35px 15px 15px; background-color: #181818; border: 1px solid #c8e1b9; position: relative; width: fit-content; max-width: 800px; }
         .close-btn { position: absolute; top: 5px; right: 8px; background: transparent; border: none; font-size: 24px; color: #c8e1b9; cursor: pointer; }
+        .tabs { display: flex; gap: 8px; }
+        .tab-btn { background: #1e1e1e; border: 1px solid #333; color: #aaa; padding: 4px 12px; cursor: pointer; font-size: 0.8em; font-weight: bold; border-radius: 4px; }
+        .tab-btn.active { background: #2a2a2a; color: #fff; border-color: #555; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section-header-inline { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -45,106 +57,152 @@
     <button class="close-btn" onclick="document.getElementById('myNotice').style.display='none'" aria-label="Close notice">&times;</button>
     <span>Input your stats visible on stat screen: str/dex/int/spr/crit chance/crit damage/ele chance/ele potency.<br>Add your specific and global attack speeds and +attack and specific and global %damages as well.<br>You also get %specific damage per 3 levels in each type.<br>(ie: level 60 magic would result in +20% magic damage)<br><br>Send any comments to @Lutcikaur on discord</span>
     </div>
-    <div class="master-layout">
-        <div class="controls-panel">
-            <div class="section-title" style="margin-top: 0;">Character Builds & Stats</div>
-            <div class="grid" id="setting-inputs">
-                <div>
-                    <label>Basic Attack</label>
-                    <select id="basic_atk">
-                        <option value="shield_bash">shield_bash</option>
-                        <option value="slash" selected>slash</option>
-                        <option value="nova">nova</option>
-                        <option value="ninja_throw">ninja_throw</option>
-                        <option value="magic_burst">magic_burst</option>
-                        <option value="holy_arrow">holy_arrow</option>
-                        <option value="soul_shot">soul_shot</option>
-                        <option value="magic_slash">magic_slash</option>
-                    </select>
-                </div>
-                <div><label>Basic Atk Level</label><input type="number" id="basic_atk_lvl" value="1"></div>
-                <div>
-                    <label>Element Type</label>
-                    <select id="element_type">
-                        <option value="normal">Normal</option>
-                        <option value="fire" selected>Fire</option>
-                        <option value="ghost">Ghost</option>
-                        <option value="ice">Ice</option>
-                        <option value="lightning">Lightning</option>
-                        <option value="metal">Metal</option>
-                    </select>
-                </div>
-            </div>
-            <div class="archetypes-container">
-                <div class="archetype-column">
-                    <div class="archetype-header" style="color: #ff7676;">Melee / STR</div>
-                    <div class="grid-group"><label>STR Stat</label><input type="number" id="stat_str" value="0"></div>
-                    <div class="grid-group"><label>Melee +Atk</label><input type="number" id="atk_melee" value="0"></div>
-                    <div class="grid-group"><label>Melee % Dmg</label><input type="number" id="dmg_melee" value="0"></div>
-                    <div class="grid-group"><label>Melee Atk Spd</label><input type="number" id="spd_melee" value="0"></div>
-                </div>
-                <div class="archetype-column">
-                    <div class="archetype-header" style="color: #ffdb76;">Ranged / DEX</div>
-                    <div class="grid-group"><label>DEX Stat</label><input type="number" id="stat_dex" value="0"></div>
-                    <div class="grid-group"><label>Ranged +Atk</label><input type="number" id="atk_ranged" value="0"></div>
-                    <div class="grid-group"><label>Ranged % Dmg</label><input type="number" id="dmg_ranged" value="0"></div>
-                    <div class="grid-group"><label>Ranged Atk Spd</label><input type="number" id="spd_ranged" value="0"></div>
-                </div>
-                <div class="archetype-column">
-                    <div class="archetype-header" style="color: #76d7ff;">Magic / INT</div>
-                    <div class="grid-group"><label>INT Stat</label><input type="number" id="stat_int" value="0"></div>
-                    <div class="grid-group"><label>Magic +Atk</label><input type="number" id="atk_magic" value="0"></div>
-                    <div class="grid-group"><label>Magic % Dmg</label><input type="number" id="dmg_magic" value="0"></div>
-                    <div class="grid-group"><label>Magic Atk Spd</label><input type="number" id="spd_magic" value="0"></div>
-                </div>
-                <div class="archetype-column">
-                    <div class="archetype-header" style="color: #cccccc;">Faith / Spirit</div>
-                    <div class="grid-group"><label>Spirit Stat</label><input type="number" id="stat_spirit" value="0"></div>
-                    <div class="grid-group"><label>Faith +Atk</label><input type="number" id="atk_faith" value="0"></div>
-                    <div class="grid-group"><label>Faith % Dmg</label><input type="number" id="dmg_faith" value="0"></div>
-                    <div class="grid-group"><label>Faith Atk Spd</label><input type="number" id="spd_faith" value="0"></div>
-                </div>
-            </div>
-            <div class="grid" id="modifiers-inputs">
-                <div class="grid-group"><label>LUK Stat</label><input type="number" id="stat_luk" value="0"></div>
-                <div class="grid-group"><label>CON Stat</label><input type="number" id="stat_con" value="0"></div>
-                <div class="grid-group"><label>All +Atk</label><input type="number" id="atk_all" value="0"></div>
-                <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" value="0"></div>
-                <div class="grid-group"><label>All Atk Spd</label><input type="number" id="spd_all" value="0"></div>
-            </div>
 
-            <div class="section-tiny-title">Input data directly from character sheet</div>
-            <div class="grid" id="combat-inputs">
-                <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" value="0"></div>
-                <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" value="0"></div>
-                <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" value="0"></div>
-                <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" value="0"></div>
+    <div id="tab-calculator" class="tab-content active">
+        <div class="master-layout">
+            <div class="controls-panel">
+                <div class="section-header-inline" style="margin-top: 0;">
+                    <div class="section-title" style="margin: 0; border: none; padding: 0;">Character Builds & Stats</div>
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('calculator')">Calculator</button>
+                        <button class="tab-btn" onclick="switchTab('database')">Ability Database</button>
+                    </div>
+                </div>
+                <div class="grid" id="setting-inputs">
+                    <div>
+                        <label>Basic Attack</label>
+                        <select id="basic_atk">
+                            <option value="slash" selected>Slash</option>
+                            <option value="magic_slash">Magic Slash</option>
+                            <option value="holy_arrow">Holy Arrow</option>
+                            <option value="shield_bash">Shield Bask</option>
+                            <option value="soul_shot">Soul Shot</option>
+                            <option value="nova">Nova</option>
+                            <option value="ninja_throw">Ninja Throw</option>
+                            <option value="magic_burst">Magic Burst</option>
+                        </select>
+                    </div>
+                    <div><label>Basic Atk Level</label><input type="number" id="basic_atk_lvl" value="1"></div>
+                    <div>
+                        <label>Element Type</label>
+                        <select id="element_type">
+                            <option value="normal">Normal</option>
+                            <option value="fire" selected>Fire</option>
+                            <option value="ghost">Ghost</option>
+                            <option value="ice">Ice</option>
+                            <option value="lightning">Lightning</option>
+                            <option value="metal">Metal</option>
+                        </select>
+                    </div>
+                    <div><label>Number of Abilities to Sum</label><input type="number" id="top_n_count" value="5" min="1"></div>
+                </div>
+                <div class="archetypes-container">
+                    <div class="archetype-column">
+                        <div class="archetype-header" style="color: #ff7676;">Melee / STR</div>
+                        <div class="grid-group"><label>STR Stat</label><input type="number" id="stat_str" value="0"></div>
+                        <div class="grid-group"><label>Melee +Atk</label><input type="number" id="atk_melee" value="0"></div>
+                        <div class="grid-group"><label>Melee % Dmg</label><input type="number" id="dmg_melee" value="0"></div>
+                        <div class="grid-group"><label>Melee Atk Spd</label><input type="number" id="spd_melee" value="0"></div>
+                    </div>
+                    <div class="archetype-column">
+                        <div class="archetype-header" style="color: #ffdb76;">Ranged / DEX</div>
+                        <div class="grid-group"><label>DEX Stat</label><input type="number" id="stat_dex" value="0"></div>
+                        <div class="grid-group"><label>Ranged +Atk</label><input type="number" id="atk_ranged" value="0"></div>
+                        <div class="grid-group"><label>Ranged % Dmg</label><input type="number" id="dmg_ranged" value="0"></div>
+                        <div class="grid-group"><label>Ranged Atk Spd</label><input type="number" id="spd_ranged" value="0"></div>
+                    </div>
+                    <div class="archetype-column">
+                        <div class="archetype-header" style="color: #76d7ff;">Magic / INT</div>
+                        <div class="grid-group"><label>INT Stat</label><input type="number" id="stat_int" value="0"></div>
+                        <div class="grid-group"><label>Magic +Atk</label><input type="number" id="atk_magic" value="0"></div>
+                        <div class="grid-group"><label>Magic % Dmg</label><input type="number" id="dmg_magic" value="0"></div>
+                        <div class="grid-group"><label>Magic Atk Spd</label><input type="number" id="spd_magic" value="0"></div>
+                    </div>
+                    <div class="archetype-column">
+                        <div class="archetype-header" style="color: #cccccc;">Faith / Spirit</div>
+                        <div class="grid-group"><label>Spirit Stat</label><input type="number" id="stat_spirit" value="0"></div>
+                        <div class="grid-group"><label>Faith +Atk</label><input type="number" id="atk_faith" value="0"></div>
+                        <div class="grid-group"><label>Faith % Dmg</label><input type="number" id="dmg_faith" value="0"></div>
+                        <div class="grid-group"><label>Faith Atk Spd</label><input type="number" id="spd_faith" value="0"></div>
+                    </div>
+                </div>
+                <div class="grid" id="modifiers-inputs">
+                    <div class="grid-group"><label>LUK Stat</label><input type="number" id="stat_luk" value="0"></div>
+                    <div class="grid-group"><label>CON Stat</label><input type="number" id="stat_con" value="0"></div>
+                    <div class="grid-group"><label>All +Atk</label><input type="number" id="atk_all" value="0"></div>
+                    <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" value="0"></div>
+                    <div class="grid-group"><label>All Atk Spd</label><input type="number" id="spd_all" value="0"></div>
+                </div>
+
+                <div class="section-tiny-title">Input data directly from character sheet</div>
+                <div class="grid" id="combat-inputs">
+                    <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" value="0"></div>
+                    <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" value="0"></div>
+                    <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" value="0"></div>
+                    <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" value="0"></div>
+                </div>
             </div>
-        </div>
-        <div class="tables-panel">
-            <div class="table-wrapper">
-                <h3>Single Target DPS Rankings</h3>
-                <div class="tiny-text">per skill level</div>
-                <table id="st-table">
-                    <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <div class="table-wrapper">
-                <h3>AOE DPS Rankings</h3>
-                <div class="tiny-text">per skill level</div>
-                <table id="aoe-table">
-                    <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+            <div class="tables-panel">
+                <div class="table-wrapper">
+                    <h3>Single Target DPS Rankings</h3>
+                    <div class="tiny-text">per skill level</div>
+                    <div id="st-sum" class="dps-sum-label">total dps (5): 0</div>
+                    <table id="st-table">
+                        <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="table-wrapper">
+                    <h3>AOE DPS Rankings</h3>
+                    <div class="tiny-text">per skill level</div>
+                    <div id="aoe-sum" class="dps-sum-label">total dps (5): 0</div>
+                    <table id="aoe-table">
+                        <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="tab-database" class="tab-content">
+        <div class="section-header-inline" style="margin-top: 0;">
+            <div class="section-title" style="margin: 0; border: none; padding: 0;">Complete Ability Database & Scalars</div>
+            <div class="tabs">
+                <button class="tab-btn" onclick="switchTab('calculator')">Calculator</button>
+                <button class="tab-btn active" onclick="switchTab('database')">Ability Database</button>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="db-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Ability</th>
+                        <th onclick="sortTable(1)">Cooldown</th>
+                        <th onclick="sortTable(2)">Targets</th>
+                        <th onclick="sortTable(3)">Hits</th>
+                        <th onclick="sortTable(4)">ST STR %</th>
+                        <th onclick="sortTable(5)">ST FTH %</th>
+                        <th onclick="sortTable(6)">ST MAG %</th>
+                        <th onclick="sortTable(7)">ST DEX %</th>
+                        <th onclick="sortTable(8)">AOE STR %</th>
+                        <th onclick="sortTable(9)">AOE FTH %</th>
+                        <th onclick="sortTable(10)">AOE MAG %</th>
+                        <th onclick="sortTable(11)">AOE DEX %</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
     <div id="status">Loading skill data</div>
     <div class="section-footer">Built by @Lutcikaur. Clones data from <a href="https://docs.google.com/spreadsheets/d/1-9ns1R5q_vY_Byu_VZR6zynSpP5jJgnJXl90YtiOtq8">souls-remnant-skill-damage</a><br>Not affiliated with Soul's Remnant or Chaomoon in any way. No warranty expressed or implied.</div>
 
     <script>
         let cachedAbilities = [];
+        let currentSortColumn = -1;
+        let currentSortAsc = true;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetch('./de.csv')
@@ -161,6 +219,19 @@
                     console.error(err);
                 });
         });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                if (el.textContent.toLowerCase().includes(tabName === 'calculator' ? 'calculator' : 'database')) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
 
         function parseCSVLine(text) {
             let result = [];
@@ -225,6 +296,7 @@
             });
 
             calculateAndRender();
+            renderDatabaseTable();
         }
 
         function getVal(id) {
@@ -234,7 +306,6 @@
         function calculateAndRender() {
             if (!cachedAbilities.length) return;
 
-            // Gather inputs cleanly
             const str = getVal('stat_str');
             const dex = getVal('stat_dex');
             const intVal = getVal('stat_int');
@@ -266,6 +337,7 @@
             const elemPotency = getVal('elem_potency');
 
             const elementType = document.getElementById('element_type').value;
+            const topN = Math.max(1, parseInt(document.getElementById('top_n_count').value) || 1);
 
             const baseStr = (str + (spirit * 0.25) + (con * 0.26) + 30) * (15 + atkAll + atkMelee) / 30 * (1 + (dmgMelee)/100) * (1 + dmgAll/100);
             const baseSpirit = (spirit + (spirit * 0.25) + (con * 0.2925) + 30) * (15 + atkAll + atkFaith) / 30 * (1 + (dmgFaith)/100) * (1 + dmgAll/100);
@@ -341,16 +413,93 @@
             stResults.sort((a, b) => b.dps - a.dps);
             aoeResults.sort((a, b) => b.dps - a.dps);
 
-            renderTable('st-table', stResults);
-            renderTable('aoe-table', aoeResults);
+            const stSum = stResults.slice(0, topN).reduce((acc, curr) => acc + curr.dps, 0);
+            const aoeSum = aoeResults.slice(0, topN).reduce((acc, curr) => acc + curr.dps, 0);
+
+            document.getElementById('st-sum').innerText = `Top ${topN} ability dps: ${stSum.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+            document.getElementById('aoe-sum').innerText = `Top ${topN} ability dps: ${aoeSum.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+
+            renderTable('st-table', stResults, topN);
+            renderTable('aoe-table', aoeResults, topN);
         }
 
-        function renderTable(tableId, data) {
+        function renderTable(tableId, data, topN) {
             const tbody = document.querySelector(`#${tableId} tbody`);
             tbody.innerHTML = '';
-            data.forEach(row => {
+            data.forEach((row, index) => {
                 const tr = document.createElement('tr');
+                if (index < topN) {
+                    tr.classList.add('highlighted-row');
+                }
                 tr.innerHTML = `<td>${row.name}</td><td>${row.dps.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortTable(colIndex) {
+            if (currentSortColumn === colIndex) {
+                currentSortAsc = !currentSortAsc;
+            } else {
+                currentSortColumn = colIndex;
+                currentSortAsc = true;
+            }
+
+            cachedAbilities.sort((a, b) => {
+                let valA, valB;
+
+                switch (colIndex) {
+                    case 0: valA = a.name; valB = b.name; break;
+                    case 1: valA = a.cd; valB = b.cd; break;
+                    case 2: valA = a.targets; valB = b.targets; break;
+                    case 3: valA = a.hits; valB = b.hits; break;
+                    case 4: valA = a.singleScalars.str; valB = b.singleScalars.str; break;
+                    case 5: valA = a.singleScalars.fth; valB = b.singleScalars.fth; break;
+                    case 6: valA = a.singleScalars.mag; valB = b.singleScalars.mag; break;
+                    case 7: valA = a.singleScalars.dex; valB = b.singleScalars.dex; break;
+                    case 8: valA = a.aoeScalars.str; valB = b.aoeScalars.str; break;
+                    case 9: valA = a.aoeScalars.fth; valB = b.aoeScalars.fth; break;
+                    case 10: valA = a.aoeScalars.mag; valB = b.aoeScalars.mag; break;
+                    case 11: valA = a.aoeScalars.dex; valB = b.aoeScalars.dex; break;
+                    default: return 0;
+                }
+
+                if (typeof valA === 'string') {
+                    return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return currentSortAsc ? valA - valB : valB - valA;
+                }
+            });
+
+            renderDatabaseTable();
+        }
+
+        function renderDatabaseTable() {
+            const tbody = document.querySelector('#db-table tbody');
+            tbody.innerHTML = '';
+
+            document.querySelectorAll('#db-table th').forEach((th, idx) => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (idx === currentSortColumn) {
+                    th.classList.add(currentSortAsc ? 'sort-asc' : 'sort-desc');
+                }
+            });
+
+            cachedAbilities.forEach(ability => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ability.name}</td>
+                    <td>${ability.cd}</td>
+                    <td>${ability.targets}</td>
+                    <td>${ability.hits}</td>
+                    <td>${(ability.singleScalars.str * 100).toFixed(0)}%</td>
+                    <td>${(ability.singleScalars.fth * 100).toFixed(0)}%</td>
+                    <td>${(ability.singleScalars.mag * 100).toFixed(0)}%</td>
+                    <td>${(ability.singleScalars.dex * 100).toFixed(0)}%</td>
+                    <td>${(ability.aoeScalars.str * 100).toFixed(0)}%</td>
+                    <td>${(ability.aoeScalars.fth * 100).toFixed(0)}%</td>
+                    <td>${(ability.aoeScalars.mag * 100).toFixed(0)}%</td>
+                    <td>${(ability.aoeScalars.dex * 100).toFixed(0)}%</td>
+                `;
                 tbody.appendChild(tr);
             });
         }
