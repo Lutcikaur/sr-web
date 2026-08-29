@@ -205,6 +205,12 @@
         let currentSortAsc = true;
 
         window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input, select').forEach(el => {
+                const savedValue = localStorage.getItem(el.id);
+                if (savedValue !== null) {
+                    el.value = savedValue;
+                }
+            });
             fetch('./de.csv')
                 .then(response => {
                     if (!response.ok) throw new Error(`Response error: ${response.status}`);
@@ -505,10 +511,6 @@
         }
 
         document.querySelectorAll('input, select').forEach(el => {
-            const savedValue = localStorage.getItem(el.id);
-            if (savedValue !== null) {
-                el.value = savedValue;
-            }
             el.addEventListener('input', () => {
                 localStorage.setItem(el.id, el.value);
                 calculateAndRender();
