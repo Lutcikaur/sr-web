@@ -7,6 +7,7 @@
         body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; box-sizing: border-box; }
         .section-title { font-size: 1.1em; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .section-footer { font-size: 0.8em; margin-top: 25px; margin-bottom: 10px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .section-tiny-title { font-size: 0.8em; margin-top: 5px; margin-bottom: px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .tiny-text { font-size: 0.8em; margin-top: -20px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
         label { display: block; font-size: 0.8em; margin-bottom: 3px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -33,12 +34,17 @@
             .archetypes-container { grid-template-columns: 1fr; }
             .tables-panel { flex-direction: column; }
         }
+        .notice-box { padding: 15px 35px 15px 15px; background-color: #181818; border: 1px solid #c8e1b9; position: relative; width: fit-content; max-width: 800px; }
+        .close-btn { position: absolute; top: 5px; right: 8px; background: transparent; border: none; font-size: 24px; color: #c8e1b9; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h2>DPS Calculator</h2>
-
+    <h2>Soul's Remnant Damage Calculator</h2>
+    <div class="notice-box" id="myNotice">
+    <button class="close-btn" onclick="document.getElementById('myNotice').style.display='none'" aria-label="Close notice">&times;</button>
+    <span>Input your stats visible on stat screen: str/dex/int/spr/crit chance/crit damage/ele chance/ele potency.<br>Add your specific and global attack speeds and +attack and specific and global %damages as well.<br>You also get %specific damage per 3 levels in each type.<br>(ie: level 60 magic would result in +20% magic damage)<br><br>Send any comments to @Lutcikaur on discord</span>
+    </div>
     <div class="master-layout">
         <div class="controls-panel">
             <div class="section-title" style="margin-top: 0;">Character Builds & Stats</div>
@@ -106,6 +112,8 @@
                 <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" value="0"></div>
                 <div class="grid-group"><label>All Atk Spd</label><input type="number" id="spd_all" value="0"></div>
             </div>
+
+            <div class="section-tiny-title">Input data directly from character sheet</div>
             <div class="grid" id="combat-inputs">
                 <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" value="0"></div>
                 <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" value="0"></div>
@@ -133,7 +141,7 @@
         </div>
     </div>
     <div id="status">Loading skill data</div>
-    <div class="section-footer">Not affiliated with Soul's Remnant or Chaomoon in any way. No warranty expressed or implied.</div>
+    <div class="section-footer">Built by @Lutcikaur. Clones data from <a href="https://docs.google.com/spreadsheets/d/1-9ns1R5q_vY_Byu_VZR6zynSpP5jJgnJXl90YtiOtq8">souls-remnant-skill-damage</a><br>Not affiliated with Soul's Remnant or Chaomoon in any way. No warranty expressed or implied.</div>
 
     <script>
         let cachedAbilities = [];
@@ -296,8 +304,8 @@
             else if (elementType === 'fire') { e11 = 1.5 * f10; f11 = 2 * f10; }
             else if (elementType === 'normal') { e11 = 1.8 * f10; f11 = 1.8 * f10; }
             else if (elementType === 'ice') { e11 = 1.3; f11 = 1.3; }
-            else if (elementType === 'lightning') { e11 = 1.0; f11 = 1 + (1 - Math.pow(0.6, 5)) * f10; }
-            else if (elementType === 'metal') { e11 = (1 + 0.075 * 5 * f10); f11 = (1 + 0.075 * 5 * f10);}
+            else if (elementType === 'lightning') { e11 = 1.0; f11 = 2.41 * f10; }
+            else if (elementType === 'metal') { e11 = (1 + 0.075 * 10 * f10); f11 = (1 + 0.075 * 10 * f10);}
 
             let stResults = [];
             let aoeResults = [];
