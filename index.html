@@ -75,7 +75,7 @@
                             <option value="slash" selected>Slash</option>
                             <option value="magic_slash">Magic Slash</option>
                             <option value="holy_arrow">Holy Arrow</option>
-                            <option value="shield_bash">Shield Bask</option>
+                            <option value="shield_bash">Shield Bash</option>
                             <option value="soul_shot">Soul Shot</option>
                             <option value="nova">Nova</option>
                             <option value="ninja_throw">Ninja Throw</option>
@@ -371,19 +371,21 @@
             const f9 = baseDex + f8;
 
             const minElemChance = Math.min(elemChance, 100);
-            const f10 = minElemChance * (elemPotency + 100) / 10000 + (100 - minElemChance) / 100;
+            const f10 = minElemChance * (elemPotency) / 10000;
 
             const minCritChance = Math.min(critChance, 100);
             const c11 = minCritChance * (critDmg + 100) / 10000 + (100 - minCritChance) / 100;
 
-            let e11 = 1.0;
-            let f11 = 1.0;
-            if (elementType === 'ghost') { e11 = 1.75 * f10; f11 = 2.2 * f10; }
-            else if (elementType === 'fire') { e11 = 1.5 * f10; f11 = 2 * f10; }
-            else if (elementType === 'normal') { e11 = 1.8 * f10; f11 = 1.8 * f10; }
-            else if (elementType === 'ice') { e11 = 1.3; f11 = 1.3; }
-            else if (elementType === 'lightning') { e11 = 1.0; f11 = 2.41 * f10; }
-            else if (elementType === 'metal') { e11 = (1 + 0.075 * 10 * f10); f11 = (1 + 0.075 * 10 * f10);}
+            let e11 = 0.0;
+            let f11 = 0.0;
+            if (elementType === 'ghost') { e11 = 0.75 * f10; f11 = 1.2 * f10; }
+            else if (elementType === 'fire') { e11 = 0.5 * f10; f11 = 1 * f10; }
+            else if (elementType === 'normal') { e11 = 0.8 * f10; f11 = 0.8 * f10; }
+            else if (elementType === 'ice') { e11 = 0.3; f11 = 0.3; }
+            else if (elementType === 'lightning') { e11 = 0; f11 = 1.41 * f10; }
+            else if (elementType === 'metal') { e11 = (0.075 * 10 * f10); f11 = (0.075 * 10 * f10);}
+            e11 += 1;
+            f11 += 1;
 
             let stResults = [];
             let aoeResults = [];
