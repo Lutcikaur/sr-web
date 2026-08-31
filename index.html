@@ -164,6 +164,7 @@
                     <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" class="calc-input" value="0"></div>
                     <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" class="calc-input" value="0"></div>
                     <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>Armor Penetration</label><input type="number" id="armor_pen" class="calc-input" value="0"></div>
                 </div>
 
             </div>
@@ -675,13 +676,6 @@
                     if (ability.skillType?.dex) speed += spdAll + spdRanged;
                     multiplier *= speed / 100.0;
                 }
-
-                const finalArmor = 10 - armorPen;
-                if (finalArmor >= 0) {
-                    finalArmor / 40 + finalArmor
-                }
-
-                console.log(armorMultiplier);
 
                 const finalST = (stStr + stFth + stMag + stDex) * c11 * e11 * multiplier * armorMultiplier;
                 const finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * f11 * multiplier * armorMultiplier;
