@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <title>SR Damage Calculator</title>
     <style>
-        body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 0px 30px 30px 30px; box-sizing: border-box; }
         .section-title { font-size: 1.1em; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .section-footer { font-size: 0.8em; margin-top: 25px; margin-bottom: 10px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
-        .section-tiny-title { font-size: 0.8em; margin-top: 5px; margin-bottom: px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .section-tiny-title { font-size: 0.8em; margin-top: 5px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .tiny-text { font-size: 0.8em; margin-top: -20px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .dps-sum-label { font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #ffdb76; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
@@ -29,10 +29,19 @@
         .archetype-column .grid-group { margin-bottom: 8px; }
         .master-layout { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
         .controls-panel { flex: 1 1 800px; }
-        .tables-panel { flex: 1 1 300px; display: flex; gap: 20px; min-width: 0; max-height: 700px; overflow-y: auto; }
+        .tables-panel { flex: 1 1 300px; display: flex; gap: 20px; min-width: 0; max-height: 1250px; overflow-y: auto; }
         .table-wrapper { flex: 1; min-width: 0; }
+        .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .item-card { background: #161616; border: 1px solid #282828; border-radius: 6px; padding: 10px; }
+        .item-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: bold; font-size: 0.85em; color: #ffdb76; }
+        .stat-row { display: flex; gap: 5px; margin-bottom: 4px; }
+        .btn { background: #2a2a2a; border: 1px solid #444; color: #fff; padding: 4px 10px; cursor: pointer; font-size: 0.8em; border-radius: 4px; }
+        .btn:hover { background: #3a3a3a; }
+        .btn-danger { background: #421c1c; border-color: #612727; }
+        .btn-danger:hover { background: #5c2626; }
         @media (max-width: 1130px) {
             .archetypes-container { grid-template-columns: repeat(2, 1fr); }
+            .items-grid { grid-template-columns: 1fr; }
             .controls-panel { flex: 1 1 100%; }
             .tables-panel { flex: 1 1 100%; }
         }
@@ -55,14 +64,14 @@
     <h2>Soul's Remnant Damage Calculator</h2>
     <div class="notice-box" id="myNotice">
     <button class="close-btn" onclick="document.getElementById('myNotice').style.display='none'" aria-label="Close notice">&times;</button>
-    <span>Input your stats visible on stat screen: str/dex/int/spr/crit chance/crit damage/ele chance/ele potency.<br>Add your specific and global attack speeds and +attack and specific and global %damages as well.<br>You also get %specific damage per 3 levels in each type.<br>(ie: level 60 magic would result in +20% magic damage)<br><br>Send any comments to @Lutcikaur on discord</span>
+    <span>Input your base stats or use the Item Loadout manager.<br>Items Loadout Manager and Extra Character Stats are added together when performing calculations.<br>Either or both can be used.<br>Send any comments to @Lutcikaur on discord</span>
     </div>
 
     <div id="tab-calculator" class="tab-content active">
         <div class="master-layout">
             <div class="controls-panel">
                 <div class="section-header-inline" style="margin-top: 0;">
-                    <div class="section-title" style="margin: 0; border: none; padding: 0;">Character Builds & Stats</div>
+                    <div class="section-title" style="margin: 0; border: none; padding: 0;">Character Builder</div>
                     <div class="tabs">
                         <button class="tab-btn active" onclick="switchTab('calculator')">Calculator</button>
                         <button class="tab-btn" onclick="switchTab('database')">Ability Database</button>
@@ -71,7 +80,7 @@
                 <div class="grid" id="setting-inputs">
                     <div>
                         <label>Basic Attack</label>
-                        <select id="basic_atk">
+                        <select id="basic_atk" class="calc-input">
                             <option value="slash" selected>Slash</option>
                             <option value="magic_slash">Magic Slash</option>
                             <option value="holy_arrow">Holy Arrow</option>
@@ -82,10 +91,10 @@
                             <option value="magic_burst">Magic Burst</option>
                         </select>
                     </div>
-                    <div><label>Basic Atk Level</label><input type="number" id="basic_atk_lvl" value="1"></div>
+                    <div><label>Basic Atk Level</label><input type="number" id="basic_atk_lvl" class="calc-input" value="1"></div>
                     <div>
                         <label>Element Type</label>
-                        <select id="element_type">
+                        <select id="element_type" class="calc-input">
                             <option value="normal">Normal</option>
                             <option value="fire" selected>Fire</option>
                             <option value="ghost">Ghost</option>
@@ -94,53 +103,69 @@
                             <option value="metal">Metal</option>
                         </select>
                     </div>
-                    <div><label>Number of Abilities to Sum</label><input type="number" id="top_n_count" value="5" min="1"></div>
+                    <div><label>Number of Abilities to Sum</label><input type="number" id="top_n_count" class="calc-input" value="5" min="1"></div>
+                    <div><label>Monster Armor</label><input type="number" id="monster_armor" class="calc-input" value="10" min="0"></div>
                 </div>
+                <h3>Item Loadout Manager</h3>
+                <div class="tiny-text">Stats on items are summed with character stats for damage calculations</div>
+                <div class="grid" style="margin-bottom: 10px;">
+                    <div>
+                        <label>Active Gear Set</label>
+                        <select id="gear_set_selector" onchange="switchGearSet(this.value)"></select>
+                    </div>
+                    <div style="display: flex; gap: 5px; align-items: flex-end;">
+                        <button class="btn" onclick="saveNewGearSet()">New Gear Set</button>
+                        <button class="btn" onclick="copyGearSet()">Save Set As...</button>
+                        <button class="btn btn-danger" onclick="deleteCurrentGearSet()">Delete Set</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="items-container"></div>
+                <h3>Extra Character Stats</h3>
+                <div class="tiny-text">Stats are summed with items from Item Manager for damage calculations</div>
                 <div class="archetypes-container">
                     <div class="archetype-column">
                         <div class="archetype-header" style="color: #ff7676;">Melee / STR</div>
-                        <div class="grid-group"><label>STR Stat</label><input type="number" id="stat_str" value="0"></div>
-                        <div class="grid-group"><label>Melee +Atk</label><input type="number" id="atk_melee" value="0"></div>
-                        <div class="grid-group"><label>Melee % Dmg</label><input type="number" id="dmg_melee" value="0"></div>
-                        <div class="grid-group"><label>Melee Atk Spd</label><input type="number" id="spd_melee" value="0"></div>
+                        <div class="grid-group"><label>STR Stat</label><input type="number" id="stat_str" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Melee +Atk</label><input type="number" id="atk_melee" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Melee % Dmg</label><input type="number" id="dmg_melee" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Melee Atk Spd</label><input type="number" id="spd_melee" class="calc-input" value="0"></div>
                     </div>
                     <div class="archetype-column">
                         <div class="archetype-header" style="color: #ffdb76;">Ranged / DEX</div>
-                        <div class="grid-group"><label>DEX Stat</label><input type="number" id="stat_dex" value="0"></div>
-                        <div class="grid-group"><label>Ranged +Atk</label><input type="number" id="atk_ranged" value="0"></div>
-                        <div class="grid-group"><label>Ranged % Dmg</label><input type="number" id="dmg_ranged" value="0"></div>
-                        <div class="grid-group"><label>Ranged Atk Spd</label><input type="number" id="spd_ranged" value="0"></div>
+                        <div class="grid-group"><label>DEX Stat</label><input type="number" id="stat_dex" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Ranged +Atk</label><input type="number" id="atk_ranged" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Ranged % Dmg</label><input type="number" id="dmg_ranged" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Ranged Atk Spd</label><input type="number" id="spd_ranged" class="calc-input" value="0"></div>
                     </div>
                     <div class="archetype-column">
                         <div class="archetype-header" style="color: #76d7ff;">Magic / INT</div>
-                        <div class="grid-group"><label>INT Stat</label><input type="number" id="stat_int" value="0"></div>
-                        <div class="grid-group"><label>Magic +Atk</label><input type="number" id="atk_magic" value="0"></div>
-                        <div class="grid-group"><label>Magic % Dmg</label><input type="number" id="dmg_magic" value="0"></div>
-                        <div class="grid-group"><label>Magic Atk Spd</label><input type="number" id="spd_magic" value="0"></div>
+                        <div class="grid-group"><label>INT Stat</label><input type="number" id="stat_int" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Magic +Atk</label><input type="number" id="atk_magic" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Magic % Dmg</label><input type="number" id="dmg_magic" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Magic Atk Spd</label><input type="number" id="spd_magic" class="calc-input" value="0"></div>
                     </div>
                     <div class="archetype-column">
                         <div class="archetype-header" style="color: #cccccc;">Faith / Spirit</div>
-                        <div class="grid-group"><label>Spirit Stat</label><input type="number" id="stat_spirit" value="0"></div>
-                        <div class="grid-group"><label>Faith +Atk</label><input type="number" id="atk_faith" value="0"></div>
-                        <div class="grid-group"><label>Faith % Dmg</label><input type="number" id="dmg_faith" value="0"></div>
-                        <div class="grid-group"><label>Faith Atk Spd</label><input type="number" id="spd_faith" value="0"></div>
+                        <div class="grid-group"><label>Spirit Stat</label><input type="number" id="stat_spirit" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Faith +Atk</label><input type="number" id="atk_faith" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Faith % Dmg</label><input type="number" id="dmg_faith" class="calc-input" value="0"></div>
+                        <div class="grid-group"><label>Faith Atk Spd</label><input type="number" id="spd_faith" class="calc-input" value="0"></div>
                     </div>
                 </div>
                 <div class="grid" id="modifiers-inputs">
-                    <div class="grid-group"><label>LUK Stat</label><input type="number" id="stat_luk" value="0"></div>
-                    <div class="grid-group"><label>CON Stat</label><input type="number" id="stat_con" value="0"></div>
-                    <div class="grid-group"><label>All +Atk</label><input type="number" id="atk_all" value="0"></div>
-                    <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" value="0"></div>
-                    <div class="grid-group"><label>All Atk Spd</label><input type="number" id="spd_all" value="0"></div>
+                    <div class="grid-group"><label>LUK Stat</label><input type="number" id="stat_luk" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>CON Stat</label><input type="number" id="stat_con" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>All +Atk</label><input type="number" id="atk_all" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>All % Dmg</label><input type="number" id="dmg_all" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>All Atk Spd</label><input type="number" id="spd_all" class="calc-input" value="0"></div>
+                </div>
+                <div class="grid" id="combat-inputs">
+                    <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" class="calc-input" value="0"></div>
+                    <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" class="calc-input" value="0"></div>
                 </div>
 
-                <div class="section-tiny-title">Input data directly from character sheet</div>
-                <div class="grid" id="combat-inputs">
-                    <div class="grid-group"><label>Crit Chance %</label><input type="number" id="crit_chance" value="0"></div>
-                    <div class="grid-group"><label>Crit Damage %</label><input type="number" id="crit_dmg" value="0"></div>
-                    <div class="grid-group"><label>Elemental Chance %</label><input type="number" id="elem_chance" value="0"></div>
-                    <div class="grid-group"><label>Elemental Potency %</label><input type="number" id="elem_potency" value="0"></div>
-                </div>
             </div>
             <div class="tables-panel">
                 <div class="table-wrapper">
@@ -164,7 +189,6 @@
             </div>
         </div>
     </div>
-
     <div id="tab-database" class="tab-content">
         <div class="section-header-inline" style="margin-top: 0;">
             <div class="section-title" style="margin: 0; border: none; padding: 0;">Complete Ability Database & Scalars</div>
@@ -195,22 +219,86 @@
             </table>
         </div>
     </div>
-
     <div id="status">Loading skill data</div>
     <div class="section-footer">Built by @Lutcikaur. Clones data from <a href="https://docs.google.com/spreadsheets/d/1-9ns1R5q_vY_Byu_VZR6zynSpP5jJgnJXl90YtiOtq8">souls-remnant-skill-damage</a><br>Not affiliated with Soul's Remnant or Chaomoon in any way. No warranty expressed or implied.</div>
-
     <script>
         let cachedAbilities = [];
         let currentSortColumn = -1;
         let currentSortAsc = true;
+        const statOptions = [
+            { id: 'stat_str', label: '+ STR' },
+            { id: 'stat_str_percent', label: '% STR' },
+            { id: 'stat_dex', label: '+ DEX' },
+            { id: 'stat_dex_percent', label: '% DEX' },
+            { id: 'stat_int', label: '+ INT' },
+            { id: 'stat_int_percent', label: '% INT' },
+            { id: 'stat_spirit', label: '+ SPR' },
+            { id: 'stat_spirit_percent', label: '% SPR' },
+            { id: 'stat_luk', label: '+ LUK' },
+            { id: 'stat_luk_percent', label: '% LUK' },
+            { id: 'stat_con', label: '+ CON' },
+            { id: 'stat_con_percent', label: '% CON' },
+            { id: 'atk_all', label: 'Flat +Atk: Global' },
+            { id: 'atk_melee', label: 'Flat +Atk: Melee' },
+            { id: 'atk_ranged', label: 'Flat +Atk: Ranged' },
+            { id: 'atk_magic', label: 'Flat +Atk: Magic' },
+            { id: 'atk_faith', label: 'Flat +Atk: Faith' },
+            { id: 'dmg_all', label: 'Damage: %Global' },
+            { id: 'dmg_melee', label: 'Damage: %Melee' },
+            { id: 'dmg_ranged', label: 'Damage: %Ranged' },
+            { id: 'dmg_magic', label: 'Damage: %Magic' },
+            { id: 'dmg_faith', label: 'Damage: %Faith' },
+            { id: 'spd_all', label: 'Attack Speed: Global' },
+            { id: 'spd_melee', label: 'Attack Speed: Melee' },
+            { id: 'spd_ranged', label: 'Attack Speed: Ranged' },
+            { id: 'spd_magic', label: 'Attack Speed: Magic' },
+            { id: 'spd_faith', label: 'Attack Speed: Faith' },
+            { id: 'crit_chance', label: 'Crit Chance %' },
+            { id: 'crit_dmg', label: 'Crit Damage %' },
+            { id: 'elem_chance', label: 'Elemental Chance %' },
+            { id: 'elem_potency', label: 'Elemental Potency %' },
+            { id: 'armor_pen', label: 'Armor Penetration' },
+        ];
+
+        const SLOT_NAMES = [
+            "Hat", "Weapon", "Face", "Bag", "Topwear",
+            "Ring", "Bottomwear", "Ring", "Shoes", "Aura"
+        ];
+
+        function normalizeSlots(items = []) {
+            return SLOT_NAMES.map((slotName, i) => {
+                if (items[i]) {
+                    return { ...items[i], name: slotName };
+                }
+                return { name: slotName, stats: [] };
+            });
+        }
+
+        let rawGearSets = JSON.parse(localStorage.getItem('sr_gear_sets'));
+        let gearSets = {};
+
+        if (rawGearSets) {
+            Object.keys(rawGearSets).forEach(setName => {
+                gearSets[setName] = normalizeSlots(rawGearSets[setName]);
+            });
+        } else {
+            gearSets = {
+                "Default Set": normalizeSlots([])
+            };
+        }
+
+        let activeGearSetName = localStorage.getItem('sr_active_set') || "Default Set";
+        if (!gearSets[activeGearSetName]) activeGearSetName = Object.keys(gearSets)[0];
 
         window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('input, select').forEach(el => {
+            document.querySelectorAll('.calc-input').forEach(el => {
                 const savedValue = localStorage.getItem(el.id);
-                if (savedValue !== null) {
-                    el.value = savedValue;
-                }
+                if (savedValue !== null) el.value = savedValue;
             });
+
+            renderGearSetsDropdown();
+            renderItemsUI();
+
             fetch('./de.csv')
                 .then(response => {
                     if (!response.ok) throw new Error(`Response error: ${response.status}`);
@@ -235,7 +323,6 @@
                     el.classList.remove('active');
                 }
             });
-
             document.getElementById(`tab-${tabName}`).classList.add('active');
         }
 
@@ -271,14 +358,13 @@
             dataLines.forEach(line => {
                 const cols = parseCSVLine(line);
                 if (!cols[0]) return;
-
                 cachedAbilities.push({
                     name: cols[0],
                     cd: parseFloat(cols[1]) || 0,
                     targets: parseFloat(cols[2]) || 1,
                     hits: parseFloat(cols[3]) || 1,
                     miss: parseFloat(cols[4]),
-                    useSpeed: cols[10] !== 'TRUE' || cols[10] !== 'true',
+                    useSpeed: !(cols[10] === 'TRUE' || cols[10] === 'true'),
                     skillType: {
                         str: cols[5] === 'TRUE' || cols[5] === 'true',
                         fth: cols[6] === 'TRUE' || cols[6] === 'true',
@@ -306,41 +392,210 @@
         }
 
         function getVal(id) {
-            return parseFloat(document.getElementById(id).value) || 0;
+            return parseFloat(document.getElementById(id)?.value) || 0;
+        }
+
+        function renderGearSetsDropdown() {
+            const select = document.getElementById('gear_set_selector');
+            select.innerHTML = '';
+            Object.keys(gearSets).forEach(setName => {
+                const opt = document.createElement('option');
+                opt.value = setName;
+                opt.textContent = setName;
+                if (setName === activeGearSetName) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderItemsUI() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            const currentItems = gearSets[activeGearSetName];
+
+            currentItems.forEach((item, itemIdx) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+
+                let statsHtml = '';
+                item.stats.forEach((st, statIdx) => {
+                    let optionsHtml = statOptions.map(opt => `<option value="${opt.id}" ${opt.id === st.statId ? 'selected' : ''}>${opt.label}</option>`).join('');
+                    statsHtml += `
+                        <div class="stat-row">
+                            <input type="text" value="${item.name}" placeholder="Item Name" style="flex: 1.2;" oninput="updateItemName(${itemIdx}, this.value)">
+                            <select style="flex: 1.5;" onchange="updateItemStatId(${itemIdx}, ${statIdx}, this.value)">${optionsHtml}</select>
+                            <input type="number" style="flex: 0.8;" value="${st.value}" oninput="updateItemStatVal(${itemIdx}, ${statIdx}, this.value)">
+                            <button class="btn btn-danger" onclick="removeItemStat(${itemIdx}, ${statIdx})">&times;</button>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="item-card-header">
+                        <span>${SLOT_NAMES[itemIdx] || `Slot ${itemIdx + 1}`}</span>
+                        <button class="btn" style="padding: 1px 6px; font-size: 0.75em;" onclick="addItemStat(${itemIdx})">+ Add Stat</button>
+                    </div>
+                    ${statsHtml.length ? statsHtml : '<div style="font-size: 0.8em; color: #666; font-style: italic; margin-bottom: 5px;">No stats added</div>'}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateItemName(itemIdx, val) {
+            gearSets[activeGearSetName][itemIdx].name = val;
+            saveGearSets();
+        }
+
+        function addItemStat(itemIdx) {
+            gearSets[activeGearSetName][itemIdx].stats.push({ statId: 'stat_str', value: 0 });
+            saveGearSets();
+            renderItemsUI();
+            calculateAndRender();
+        }
+
+        function updateItemStatId(itemIdx, statIdx, val) {
+            gearSets[activeGearSetName][itemIdx].stats[statIdx].statId = val;
+            saveGearSets();
+            calculateAndRender();
+        }
+
+        function updateItemStatVal(itemIdx, statIdx, val) {
+            gearSets[activeGearSetName][itemIdx].stats[statIdx].value = parseFloat(val) || 0;
+            saveGearSets();
+            calculateAndRender();
+        }
+
+        function removeItemStat(itemIdx, statIdx) {
+            gearSets[activeGearSetName][itemIdx].stats.splice(statIdx, 1);
+            saveGearSets();
+            renderItemsUI();
+            calculateAndRender();
+        }
+
+        function saveNewGearSet() {
+            const setName = prompt("Enter name for new gear set:", "Set " + (Object.keys(gearSets).length + 1));
+            if (!setName) return;
+            gearSets[setName] = JSON.parse(JSON.stringify(normalizeSlots([])));
+            activeGearSetName = setName;
+            saveGearSets();
+            renderGearSetsDropdown();
+            renderItemsUI();
+        }
+
+        function copyGearSet() {
+            const setName = prompt("Enter name for new gear set:", "Set " + (Object.keys(gearSets).length + 1));
+            if (!setName) return;
+            gearSets[setName] = JSON.parse(JSON.stringify(gearSets[activeGearSetName]));
+            activeGearSetName = setName;
+            saveGearSets();
+            renderGearSetsDropdown();
+            renderItemsUI();
+        }
+
+        function deleteCurrentGearSet() {
+            if (Object.keys(gearSets).length <= 1) {
+                alert("You cannot delete the last remaining gear set.");
+                return;
+            }
+            if (confirm(`Delete gear set "${activeGearSetName}"?`)) {
+                delete gearSets[activeGearSetName];
+                activeGearSetName = Object.keys(gearSets)[0];
+                saveGearSets();
+                renderGearSetsDropdown();
+                renderItemsUI();
+                calculateAndRender();
+            }
+        }
+
+        function switchGearSet(setName) {
+            activeGearSetName = setName;
+            localStorage.setItem('sr_active_set', activeGearSetName);
+            renderItemsUI();
+            calculateAndRender();
+        }
+
+        function saveGearSets() {
+            localStorage.setItem('sr_gear_sets', JSON.stringify(gearSets));
+            localStorage.setItem('sr_active_set', activeGearSetName);
         }
 
         function calculateAndRender() {
             if (!cachedAbilities.length) return;
+            const baseStats = {
+                stat_str: getVal('stat_str'),
+                stat_dex: getVal('stat_dex'),
+                stat_int: getVal('stat_int'),
+                stat_spirit: getVal('stat_spirit'),
+                stat_luk: getVal('stat_luk'),
+                stat_con: getVal('stat_con'),
+                stat_str_percent: getVal('stat_str_percent'),
+                stat_dex_percent: getVal('stat_dex_percent'),
+                stat_int_percent: getVal('stat_int_percent'),
+                stat_spirit_percent: getVal('stat_spirit_percent'),
+                stat_luk_percent: getVal('stat_luk_percent'),
+                stat_con_percent: getVal('stat_con_percent'),
+                atk_all: getVal('atk_all'),
+                atk_melee: getVal('atk_melee'),
+                atk_ranged: getVal('atk_ranged'),
+                atk_magic: getVal('atk_magic'),
+                atk_faith: getVal('atk_faith'),
+                dmg_all: getVal('dmg_all'),
+                dmg_melee: getVal('dmg_melee'),
+                dmg_ranged: getVal('dmg_ranged'),
+                dmg_magic: getVal('dmg_magic'),
+                dmg_faith: getVal('dmg_faith'),
+                spd_all: getVal('spd_all'),
+                spd_melee: getVal('spd_melee'),
+                spd_ranged: getVal('spd_ranged'),
+                spd_magic: getVal('spd_magic'),
+                spd_faith: getVal('spd_faith'),
+                crit_chance: getVal('crit_chance'),
+                crit_dmg: getVal('crit_dmg'),
+                elem_chance: getVal('elem_chance'),
+                elem_potency: getVal('elem_potency'),
+                armor_pen: getVal('armor_pen'),
+                monster_armor: getVal('monster_armor'),
+            };
 
-            const str = getVal('stat_str');
-            const dex = getVal('stat_dex');
-            const intVal = getVal('stat_int');
-            const spirit = getVal('stat_spirit');
-            const luk = getVal('stat_luk');
-            const con = getVal('stat_con');
+            if (gearSets[activeGearSetName]) {
+                gearSets[activeGearSetName].forEach(item => {
+                    item.stats.forEach(st => {
+                        if (baseStats[st.statId] !== undefined) {
+                            baseStats[st.statId] += st.value;
+                        }
+                    });
+                });
+            }
 
-            const atkAll = getVal('atk_all');
-            const atkMelee = getVal('atk_melee');
-            const atkRanged = getVal('atk_ranged');
-            const atkMagic = getVal('atk_magic');
-            const atkFaith = getVal('atk_faith');
+            const str = baseStats.stat_str * (100 + baseStats.stat_str_percent) / 100;
+            const dex = baseStats.stat_dex * (100 + baseStats.stat_dex_percent) / 100;
+            const intVal = baseStats.stat_int * (100 + baseStats.stat_int_percent) / 100;
+            const spirit = baseStats.stat_spirit * (100 + baseStats.stat_spirit_percent) / 100;
+            const luk = baseStats.stat_luk * (100 + baseStats.stat_luk_percent) / 100;
+            const con = baseStats.stat_con * (100 + baseStats.stat_con_percent) / 100;
 
-            const dmgAll = getVal('dmg_all');
-            const dmgMelee = getVal('dmg_melee');
-            const dmgRanged = getVal('dmg_ranged');
-            const dmgMagic = getVal('dmg_magic');
-            const dmgFaith = getVal('dmg_faith');
+            const atkAll = baseStats.atk_all;
+            const atkMelee = baseStats.atk_melee;
+            const atkRanged = baseStats.atk_ranged;
+            const atkMagic = baseStats.atk_magic;
+            const atkFaith = baseStats.atk_faith;
 
-            let spdAll = getVal('spd_all');
-            const spdMelee = getVal('spd_melee');
-            const spdRanged = getVal('spd_ranged');
-            const spdMagic = getVal('spd_magic');
-            const spdFaith = getVal('spd_faith');
+            const dmgAll = baseStats.dmg_all;
+            const dmgMelee = baseStats.dmg_melee;
+            const dmgRanged = baseStats.dmg_ranged;
+            const dmgMagic = baseStats.dmg_magic;
+            const dmgFaith = baseStats.dmg_faith;
 
-            const critChance = getVal('crit_chance');
-            const critDmg = getVal('crit_dmg');
-            const elemChance = getVal('elem_chance');
-            const elemPotency = getVal('elem_potency');
+            let spdAll = baseStats.spd_all;
+            const spdMelee = baseStats.spd_melee;
+            const spdRanged = baseStats.spd_ranged;
+            const spdMagic = baseStats.spd_magic;
+            const spdFaith = baseStats.spd_faith;
+
+            const critChance = baseStats.crit_chance;
+            const critDmg = baseStats.crit_dmg;
+            const elemChance = baseStats.elem_chance;
+            const elemPotency = baseStats.elem_potency;
+            let armorPen = baseStats.armor_pen;
 
             const elementType = document.getElementById('element_type').value;
             const topN = Math.max(1, parseInt(document.getElementById('top_n_count').value) || 1);
@@ -383,9 +638,19 @@
             else if (elementType === 'normal') { e11 = 0.8 * f10; f11 = 0.8 * f10; }
             else if (elementType === 'ice') { e11 = 0.3; f11 = 0.3; }
             else if (elementType === 'lightning') { e11 = 0; f11 = 1.41 * f10; }
-            else if (elementType === 'metal') { e11 = (0.075 * 10); f11 = (0.075 * 10 * f10);}
+            else if (elementType === 'metal') { armorPen += 3 * Math.floor(elemPotency / 10); }
             e11 += 1;
             f11 += 1;
+
+            const baseArmor = baseStats.monster_armor;
+            const currentArmor = baseArmor - armorPen;
+
+            let armorMultiplier = 0;
+            if (currentArmor >= 0) {
+                armorMultiplier = 40 / (40 + (currentArmor));
+            } else {
+                armorMultiplier = 1 + Math.abs(currentArmor) / 40;
+            }
 
             let stResults = [];
             let aoeResults = [];
@@ -401,18 +666,25 @@
                 const aoeMag = ability.aoeScalars.mag * e9;
                 const aoeDex = ability.aoeScalars.dex * f9;
 
-                let multiplier = 1.0
+                let multiplier = 1.0;
                 if (ability.useSpeed) {
-                    let speed = 100.0
+                    let speed = 100.0;
                     if (ability.skillType?.str) speed += spdAll + spdMelee;
                     if (ability.skillType?.fth) speed += spdAll + spdFaith;
                     if (ability.skillType?.mag) speed += spdAll + spdMagic;
                     if (ability.skillType?.dex) speed += spdAll + spdRanged;
-                    multiplier *= speed / 100.0
+                    multiplier *= speed / 100.0;
                 }
 
-                const finalST = (stStr + stFth + stMag + stDex) * c11 * e11 * multiplier;
-                const finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * f11 * multiplier;
+                const finalArmor = 10 - armorPen;
+                if (finalArmor >= 0) {
+                    finalArmor / 40 + finalArmor
+                }
+
+                console.log(armorMultiplier);
+
+                const finalST = (stStr + stFth + stMag + stDex) * c11 * e11 * multiplier * armorMultiplier;
+                const finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * f11 * multiplier * armorMultiplier;
 
                 stResults.push({ name: ability.name, dps: Math.max(0, finalST) });
                 aoeResults.push({ name: ability.name, dps: Math.max(0, finalAOE) });
@@ -454,7 +726,6 @@
 
             cachedAbilities.sort((a, b) => {
                 let valA, valB;
-
                 switch (colIndex) {
                     case 0: valA = a.name; valB = b.name; break;
                     case 1: valA = a.cd; valB = b.cd; break;
@@ -470,21 +741,18 @@
                     case 11: valA = a.aoeScalars.dex; valB = b.aoeScalars.dex; break;
                     default: return 0;
                 }
-
                 if (typeof valA === 'string') {
                     return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 } else {
                     return currentSortAsc ? valA - valB : valB - valA;
                 }
             });
-
             renderDatabaseTable();
         }
 
         function renderDatabaseTable() {
             const tbody = document.querySelector('#db-table tbody');
             tbody.innerHTML = '';
-
             document.querySelectorAll('#db-table th').forEach((th, idx) => {
                 th.classList.remove('sort-asc', 'sort-desc');
                 if (idx === currentSortColumn) {
@@ -512,7 +780,7 @@
             });
         }
 
-        document.querySelectorAll('input, select').forEach(el => {
+        document.querySelectorAll('.calc-input').forEach(el => {
             el.addEventListener('input', () => {
                 localStorage.setItem(el.id, el.value);
                 calculateAndRender();
