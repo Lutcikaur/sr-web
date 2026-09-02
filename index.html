@@ -60,13 +60,11 @@
     </style>
 </head>
 <body>
-
     <h2>Soul's Remnant Damage Calculator</h2>
     <div class="notice-box" id="myNotice">
     <button class="close-btn" onclick="document.getElementById('myNotice').style.display='none'" aria-label="Close notice">&times;</button>
     <span>Input your base stats or use the Item Loadout manager.<br>Items Loadout Manager and Extra Character Stats are added together when performing calculations.<br>Either or both can be used.<br>Send any comments to @Lutcikaur on discord</span>
     </div>
-
     <div id="tab-calculator" class="tab-content active">
         <div class="master-layout">
             <div class="controls-panel">
@@ -171,7 +169,7 @@
             <div class="tables-panel">
                 <div class="table-wrapper">
                     <h3>Single Target DPS Rankings</h3>
-                    <div class="tiny-text">per skill level</div>
+                    <div class="tiny-text">per skill level - hover for damage breakdown</div>
                     <div id="st-sum" class="dps-sum-label">total dps (5): 0</div>
                     <table id="st-table">
                         <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
@@ -180,7 +178,7 @@
                 </div>
                 <div class="table-wrapper">
                     <h3>AOE DPS Rankings</h3>
-                    <div class="tiny-text">per skill level</div>
+                    <div class="tiny-text">per skill level - hover for damage breakdown</div>
                     <div id="aoe-sum" class="dps-sum-label">total dps (5): 0</div>
                     <table id="aoe-table">
                         <thead><tr><th>Ability</th><th>DPS</th></tr></thead>
@@ -654,6 +652,13 @@
                 armorMultiplier = 1 + Math.abs(currentArmor) / 40;
             }
 
+            let originalArmorMultiplier = 0;
+            if (baseArmor >= 0) {
+                originalArmorMultiplier = 40 / (40 + (baseArmor));
+            } else {
+                originalArmorMultiplier = 1 + Math.abs(baseArmor) / 40;
+            }
+
             let stResults = [];
             let aoeResults = [];
 
@@ -681,22 +686,42 @@
                 let finalST = (stStr + stFth + stMag + stDex) * c11 * effectiveStEle * multiplier * armorMultiplier;
                 let finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * effectiveAoeEle * multiplier * armorMultiplier;
 
+                const stComponents = [ c11, effectiveStEle, multiplier, armorMultiplier / originalArmorMultiplier ];
+                const aoeComponents = [ c11, effectiveAoeEle, multiplier, armorMultiplier / originalArmorMultiplier ];
+
                 if (ability.name === "Seirei") {
                     if (elementType === 'normal') {
                         //apply element again
                         finalST *= (stEleAdded+1)
                         finalAOE *= (aoeEleAdded+1)
+                        stComponents[1] *= (stEleAdded+1)
+                        aoeComponents[1] *= (aoeEleAdded+1)
                     } else {
                         // undo the benefits of the elmental proc, double the effect of the proc (it forces an extra proc), and add it back in
                         finalST /= effectiveStEle
                         finalST *= (effectiveStEle - 1) * 2 + 1 // 1-1=0*2=0+1=1 (no effect) or 2.5-1=1.5*2=3+1=4 (150% to 300% ie final mult of 2.5x to 4x)
+                        stComponents[1] = (effectiveStEle - 1) * 2 + 1
                         finalAOE /= effectiveAoeEle
                         finalAOE *= (effectiveAoeEle - 1) * 2 + 1
+                        aoeComponents[1] = (effectiveAoeEle - 1) * 2 + 1
                     }
                 }
+                if (elementType === 'metal') {
+                    const metallessArmor = baseArmor - baseStats.armor_pen;
+                    let metallessArmorArmorMultiplier = 0;
+                    if (metallessArmor >= 0) {
+                        metallessArmorArmorMultiplier = 40 / (40 + (metallessArmor));
+                    } else {
+                        metallessArmorArmorMultiplier = 1 + Math.abs(metallessArmor) / 40;
+                    }
+                    stComponents[1] = (armorMultiplier / originalArmorMultiplier) / (metallessArmorArmorMultiplier / originalArmorMultiplier);
+                    aoeComponents[1] = (armorMultiplier / originalArmorMultiplier) / (metallessArmorArmorMultiplier / originalArmorMultiplier);
+                    stComponents[3] = (metallessArmorArmorMultiplier / originalArmorMultiplier);
+                    aoeComponents[3] = (metallessArmorArmorMultiplier / originalArmorMultiplier);
+                }
 
-                stResults.push({ name: ability.name, dps: Math.max(0, finalST) });
-                aoeResults.push({ name: ability.name, dps: Math.max(0, finalAOE) });
+                stResults.push({ name: ability.name, dps: Math.max(0, finalST), breakdown: stComponents });
+                aoeResults.push({ name: ability.name, dps: Math.max(0, finalAOE), breakdown: aoeComponents });
             });
 
             stResults.sort((a, b) => b.dps - a.dps);
@@ -717,13 +742,90 @@
             tbody.innerHTML = '';
             data.forEach((row, index) => {
                 const tr = document.createElement('tr');
-                if (index < topN) {
-                    tr.classList.add('highlighted-row');
-                }
+                if (index < topN) tr.classList.add('highlighted-row');
+
+                // Store damage breakdown array (e.g., row.breakdown = [10, 20, 70])
+                tr.dataset.breakdown = JSON.stringify(row.breakdown || []);
+
                 tr.innerHTML = `<td>${row.name}</td><td>${row.dps.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>`;
                 tbody.appendChild(tr);
             });
         }
+
+        const popup = document.createElement('div');
+        popup.id = 'chart-popup';
+        popup.style.cssText = 'position:absolute;display:none;background:#1e1e1e;padding:8px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.5);pointer-events:none;z-index:9999;';
+        document.body.appendChild(popup);
+
+        function renderPieChart(nums, labels = ['critical', 'element', 'attack speed', 'armor pen']) {
+            const v = nums.map(num => num - 1); //they are multipliers, get just the bonus
+            const total = v.reduce((a, b) => a + b, 0);
+            if (total === 0) return '<div>No data</div>';
+
+            const colors = ['#ef476f', '#ffd166', '#06d6a0', '#118ab2', '#073b4c', '#ff595e', '#6a4c93', '#1982c4'];
+            let deg = 0, stops = '', lines = '', legendHTML = '';
+
+            v.forEach((n, i) => {
+                if (n < 0.01) { return; }
+                const pct = (n / total) * 100;
+                const start = deg;
+                deg += pct;
+                const color = colors[i % colors.length];
+
+                stops += `${color} ${start}%, ${color} ${deg}%,`;
+
+                if (v.length > 1) {
+                    lines += `<line x1="70" y1="70" x2="70" y2="0" transform="rotate(${start * 3.6} 70 70)" />`;
+                }
+
+                // Build legend row for existing values
+                const labelText = labels[i] || `Item ${i + 1}`;
+                const valFormatted = n.toLocaleString(undefined, {maximumFractionDigits: 2});
+                legendHTML += `
+                    <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <span style="width: 10px; height: 10px; background: ${color}; border-radius: 2px; flex-shrink: 0;"></span>
+                        <span style="color: #ccc;">${labelText}:</span>
+                        <span style="color: #fff; font-weight: bold;">+${valFormatted}x (${pct.toFixed(1)}%)</span>
+                    </div>`;
+            });
+
+            const id = 'p-' + Math.random().toString(36).substring(2, 7);
+            return `
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="width:140px;height:140px;flex-shrink:0;border-radius:50%;background:conic-gradient(${stops.slice(0, -1)});-webkit-mask:url(#${id});mask:url(#${id})"></div>
+                <div style="display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-family: sans-serif;">
+                    ${legendHTML}
+                </div>
+            </div>
+            <svg width="0" height="0" style="position:absolute;"><mask id="${id}" x="0" y="0" width="140" height="140" maskUnits="userSpaceOnUse">
+                <rect width="140" height="140" fill="#fff"/>
+                <circle cx="70" cy="70" r="32" fill="#000"/>
+                <g stroke="#000" stroke-width="3">${lines}</g>
+            </mask></svg>`;
+        }
+
+        document.addEventListener('mouseover', e => {
+            const tr = e.target.closest('tbody tr');
+            if (!tr || !tr.dataset.breakdown) return;
+            const nums = JSON.parse(tr.dataset.breakdown);
+            if (nums.length === 0) return;
+
+            popup.innerHTML = renderPieChart(nums);
+            popup.style.display = 'block';
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (popup.style.display === 'block') {
+                popup.style.left = (e.pageX + 15) + 'px';
+                popup.style.top = (e.pageY + 15) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseout', e => {
+            if (e.target.closest('tbody tr')) {
+                popup.style.display = 'none';
+            }
+        });
 
         function sortTable(colIndex) {
             if (currentSortColumn === colIndex) {
@@ -788,7 +890,6 @@
                 tbody.appendChild(tr);
             });
         }
-
         document.querySelectorAll('.calc-input').forEach(el => {
             el.addEventListener('input', () => {
                 localStorage.setItem(el.id, el.value);
