@@ -627,21 +627,22 @@
             const f9 = baseDex + f8;
 
             const minElemChance = Math.min(elemChance, 100);
-            const f10 = minElemChance * (elemPotency) / 10000;
+            const potency = elemPotency / 100;
 
             const minCritChance = Math.min(critChance, 100);
             const c11 = minCritChance * (critDmg + 100) / 10000 + (100 - minCritChance) / 100;
 
-            let e11 = 0.0;
-            let f11 = 0.0;
-            if (elementType === 'ghost') { e11 = 0.75 * f10; f11 = 1.2 * f10; }
-            else if (elementType === 'fire') { e11 = 0.5 * f10; f11 = 1 * f10; }
-            else if (elementType === 'normal') { e11 = 0.8 * f10; f11 = 0.8 * f10; }
-            else if (elementType === 'ice') { e11 = 0.3; f11 = 0.3; }
-            else if (elementType === 'lightning') { e11 = 0; f11 = 1.41 * f10; }
+            let stEleAdded = 0.0;
+            let aoeEleAdded = 0.0;
+            if (elementType === 'ghost') { stEleAdded = 0.75 * potency; aoeEleAdded = 1.2 * potency; }
+            else if (elementType === 'fire') { stEleAdded = 0.5 * potency; aoeEleAdded = 1 * potency; }
+            else if (elementType === 'normal') { stEleAdded = 0.8 * potency; aoeEleAdded = 0.8 * potency; }
+            else if (elementType === 'ice') { stEleAdded = 0.3; aoeEleAdded = 0.3; }
+            else if (elementType === 'lightning') { stEleAdded = 0; aoeEleAdded = 1.41 * potency; }
             else if (elementType === 'metal') { armorPen += 3 * Math.floor(elemPotency / 10); }
-            e11 += 1;
-            f11 += 1;
+
+            const effectiveStEle = stEleAdded * minElemChance / 100 + 1;
+            const effectiveAoeEle = aoeEleAdded * minElemChance / 100 + 1;
 
             const baseArmor = baseStats.monster_armor;
             const currentArmor = baseArmor - armorPen;
@@ -677,8 +678,22 @@
                     multiplier *= speed / 100.0;
                 }
 
-                const finalST = (stStr + stFth + stMag + stDex) * c11 * e11 * multiplier * armorMultiplier;
-                const finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * f11 * multiplier * armorMultiplier;
+                let finalST = (stStr + stFth + stMag + stDex) * c11 * effectiveStEle * multiplier * armorMultiplier;
+                let finalAOE = (aoeStr + aoeFth + aoeMag + aoeDex) * c11 * effectiveAoeEle * multiplier * armorMultiplier;
+
+                if (ability.name === "Seirei") {
+                    if (elementType === 'normal') {
+                        //apply element again
+                        finalST *= (stEleAdded+1)
+                        finalAOE *= (aoeEleAdded+1)
+                    } else {
+                        // undo the benefits of the elmental proc, double the effect of the proc (it forces an extra proc), and add it back in
+                        finalST /= effectiveStEle
+                        finalST *= (effectiveStEle - 1) * 2 + 1 // 1-1=0*2=0+1=1 (no effect) or 2.5-1=1.5*2=3+1=4 (150% to 300% ie final mult of 2.5x to 4x)
+                        finalAOE /= effectiveAoeEle
+                        finalAOE *= (effectiveAoeEle - 1) * 2 + 1
+                    }
+                }
 
                 stResults.push({ name: ability.name, dps: Math.max(0, finalST) });
                 aoeResults.push({ name: ability.name, dps: Math.max(0, finalAOE) });
