@@ -62,8 +62,8 @@
 <body>
     <h2>Soul's Remnant Damage Calculator</h2>
     <div class="notice-box" id="myNotice">
-    <button class="close-btn" onclick="document.getElementById('myNotice').style.display='none'" aria-label="Close notice">&times;</button>
-    <span>Input your base stats or use the Item Loadout manager.<br>Items Loadout Manager and Extra Character Stats are added together when performing calculations.<br>Either or both can be used.<br>Send any comments to @Lutcikaur on discord</span>
+        <button class="close-btn" onclick="closeNotice()" aria-label="Close notice">&times;</button>
+        <span id="noticeContent">Input your base stats or use the Item Loadout manager.<br>Items Loadout Manager and Extra Character Stats are added together when performing calculations.<br>Either or both can be used.<br>Send any comments to @Lutcikaur on discord</span>
     </div>
     <div id="tab-calculator" class="tab-content active">
         <div class="master-layout">
@@ -288,6 +288,19 @@
 
         let activeGearSetName = localStorage.getItem('sr_active_set') || "Default Set";
         if (!gearSets[activeGearSetName]) activeGearSetName = Object.keys(gearSets)[0];
+
+        const notice = document.getElementById('myNotice');
+        const contentEl = document.getElementById('noticeContent');
+        const storageKey = 'dismissedNotice';
+
+        if (localStorage.getItem(storageKey) === contentEl.innerHTML) {
+            notice.style.display = 'none';
+        }
+
+        function closeNotice() {
+            notice.style.display = 'none';
+            localStorage.setItem(storageKey, contentEl.innerHTML);
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.calc-input').forEach(el => {
