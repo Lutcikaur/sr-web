@@ -5,9 +5,9 @@
     <title>SR Damage Calculator</title>
     <style>
         body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; padding: 0px 30px 30px 30px; box-sizing: border-box; }
-        .section-title { font-size: 1.1em; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .section-title { font-size: 1.1em; font-weight: bold; margin: 0; border: none; padding: 0; color: #fff; }
         .section-footer { font-size: 0.8em; margin-top: 25px; margin-bottom: 10px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
-        .section-tiny-title { font-size: 0.8em; margin-top: 5px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
+        .section-tiny-title { font-size: 0.8em; margin-top: -8px; margin-bottom: 5px; color: #fff; padding-bottom: 5px; }
         .tiny-text { font-size: 0.8em; margin-top: -20px; margin-bottom: 5px; color: #fff; border-top: 1px solid #333; padding-bottom: 5px; }
         .dps-sum-label { font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #ffdb76; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
@@ -69,7 +69,7 @@
         <div class="master-layout">
             <div class="controls-panel">
                 <div class="section-header-inline" style="margin-top: 0;">
-                    <div class="section-title" style="margin: 0; border: none; padding: 0;">Character Builder</div>
+                    <div class="section-title">Character Builder</div>
                     <div class="tabs">
                         <button class="tab-btn active" onclick="switchTab('calculator')">Calculator</button>
                         <button class="tab-btn" onclick="switchTab('database')">Ability Database</button>
@@ -118,8 +118,12 @@
                     </div>
                 </div>
                 <div class="items-grid" id="items-container"></div>
-                <h3>Extra Character Stats</h3>
-                <div class="tiny-text">Stats are summed with items from Item Manager for damage calculations</div>
+
+                <div class="section-header-inline" style="margin-top: 0;">
+                    <div class="section-title">Extra Character Stats</div>
+                    <button class="tab-btn" onclick="rotateStats()">Rotate Character Stats</button>
+                </div>
+                <div class="section-tiny-title">Stats are summed with items from Item Manager for damage calculations</div>
                 <div class="archetypes-container">
                     <div class="archetype-column">
                         <div class="archetype-header" style="color: #ff7676;">Melee / STR</div>
@@ -190,7 +194,7 @@
     </div>
     <div id="tab-database" class="tab-content">
         <div class="section-header-inline" style="margin-top: 0;">
-            <div class="section-title" style="margin: 0; border: none; padding: 0;">Complete Ability Database & Scalars</div>
+            <div class="section-title">Complete Ability Database & Scalars</div>
             <div class="tabs">
                 <button class="tab-btn" onclick="switchTab('calculator')">Calculator</button>
                 <button class="tab-btn active" onclick="switchTab('database')">Ability Database</button>
@@ -407,6 +411,14 @@
             return parseFloat(document.getElementById(id)?.value) || 0;
         }
 
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = val;
+                localStorage.setItem(id, val);
+            }
+        }
+
         function renderGearSetsDropdown() {
             const select = document.getElementById('gear_set_selector');
             select.innerHTML = '';
@@ -528,6 +540,22 @@
         function saveGearSets() {
             localStorage.setItem('sr_gear_sets', JSON.stringify(gearSets));
             localStorage.setItem('sr_active_set', activeGearSetName);
+        }
+
+        function rotateStats() {
+            const groups = [
+                ['stat_str', 'stat_dex', 'stat_int', 'stat_spirit'],
+                ['stat_str_percent', 'stat_dex_percent', 'stat_int_percent', 'stat_spirit_percent'],
+                ['atk_melee', 'atk_ranged', 'atk_magic', 'atk_faith'],
+                ['dmg_melee', 'dmg_ranged', 'dmg_magic', 'dmg_faith'],
+                ['spd_melee', 'spd_ranged', 'spd_magic', 'spd_faith'],
+            ];
+            groups.forEach(ids => {
+                const vals = ids.map(id => getVal(id));
+                vals.unshift(vals.pop());
+                ids.forEach((id, i) => setVal(id, vals[i]));
+            });
+            calculateAndRender();
         }
 
         function calculateAndRender() {
